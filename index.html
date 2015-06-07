@@ -1,1 +1,24 @@
-Hello World
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<title>Hello world</title>
+	<link rel="stylesheet" href="/lib/styles/default.css">
+	<script src="/lib/marked.min.js"></script>
+	<script src="/lib/highlight.pack.js"></script>
+</head>
+<body>
+	<div id="content"></div>
+	<script>
+		marked.setOptions({highlight: function (code) {return hljs.highlightAuto(code).value;}});
+		var client = new XMLHttpRequest();
+		client.open('GET', '/index.md');
+		client.onreadystatechange = function()
+		{
+			if(client.readyState == 4)
+				document.getElementById('content').innerHTML = marked(client.responseText);
+		}
+		client.send();
+	</script>
+</body>
+</html>
