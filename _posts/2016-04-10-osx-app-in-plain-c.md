@@ -27,14 +27,14 @@ Let's get a bit into details how this works exactly.
 
 You can find all Objective C runtime implementation details on [Apple's open source site](http://opensource.apple.com/source/objc4/objc4-680/runtime/).
 
-So that said let's create a simple OSX app in Objective-C first. As many people advocate to use full blown AppKit just to create simplest apps, let's go other way around - use as little frameworks functionality as possible and see what happens. To make life easier let's base our code on [Minimalist Cocoa programming](http://www.cocoawithlove.com/2010/09/minimalist-cocoa-programming.html) tutorial.
+So that said let's create a simple OSX app in Objective-C first. As many people advocate to use full blown AppKit just to create simplest apps, let's go other way around - use as little frameworks functionality as possible and see what happens. To make life easier let's base our code on [Minimalist Cocoa programming](http://www.cocoawithlove.com/2010/09/minimalist-cocoa-programming.html) tutorial :
 
 {% highlight objc %}
 #import <Cocoa/Cocoa.h>
 
 int main ()
 {
-	[NSAutoreleasePool new];
+	NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
 	[NSApplication sharedApplication];
 	[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
 	id menubar = [[NSMenu new] autorelease];
@@ -48,7 +48,6 @@ int main ()
 		action:@selector(terminate:) keyEquivalent:@"q"] autorelease];
 	[appMenu addItem:quitMenuItem];
 	[appMenuItem setSubmenu:appMenu];
-
 	id window = [[[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 200, 200)
 		styleMask:NSTitledWindowMask backing:NSBackingStoreBuffered defer:NO]
 			autorelease];
@@ -56,9 +55,74 @@ int main ()
 	[window setTitle:appName];
 	[window makeKeyAndOrderFront:nil];
 	[NSApp activateIgnoringOtherApps:YES];
-
 	[NSApp run];
+	[pool drain];
+	return 0;
+}
+{% endhighlight %}
 
+Pretty simple, now let's make it with objc_msgSend calls.
+
+{% highlight objc %}
+#import <Cocoa/Cocoa.h>
+#define objc_msgSend_id				((id (*)(id, SEL))objc_msgSend)
+#define objc_msgSend_void			((void (*)(id, SEL))objc_msgSend)
+#define objc_msgSend_void_id		((void (*)(id, SEL, id))objc_msgSend)
+#define objc_msgSend_void_bool		((void (*)(id, SEL, BOOL))objc_msgSend)
+#define objc_msgSend_id_const_char	((id (*)(id, SEL, const char*))objc_msgSend)
+
+int main ()
+{
+	id poolAlloc = objc_msgSend_id((id)objc_getClass("NSAutoreleasePool"), sel_registerName("alloc"));
+	id autoreleasePool = objc_msgSend_id(poolAlloc, sel_registerName("init"));
+
+	objc_msgSend_id((id)objc_getClass("NSApplication"), sel_registerName("sharedApplication"));
+	((void (*)(id, SEL, NSInteger))objc_msgSend)(NSApp, sel_registerName("setActivationPolicy:"), 0);
+
+	id menubarAlloc = objc_msgSend_id((id)objc_getClass("NSMenu"), sel_registerName("alloc"));
+	id menubar = objc_msgSend_id(menubarAlloc, sel_registerName("init"));
+	objc_msgSend_void(menubar, sel_registerName("autorelease"));
+	
+	id appMenuItemAlloc = objc_msgSend_id((id)objc_getClass("NSMenuItem"), sel_registerName("alloc"));
+	id appMenuItem = objc_msgSend_id(appMenuItemAlloc, sel_registerName("init"));
+	objc_msgSend_void(appMenuItem, sel_registerName("autorelease"));
+	
+	objc_msgSend_void_id(menubar, sel_registerName("addItem:"), appMenuItem);
+	((id (*)(id, SEL, id))objc_msgSend)(NSApp, sel_registerName("setMainMenu:"), menubar);
+
+	id appMenuAlloc = objc_msgSend_id((id)objc_getClass("NSMenu"), sel_registerName("alloc"));
+	id appMenu = objc_msgSend_id(appMenuAlloc, sel_registerName("init"));
+	objc_msgSend_void(appMenu, sel_registerName("autorelease"));
+
+	id processInfo = objc_msgSend_id((id)objc_getClass("NSProcessInfo"), sel_registerName("processInfo"));
+	id appName = objc_msgSend_id(processInfo, sel_registerName("processName"));
+
+	id quitTitlePrefixString = objc_msgSend_id_const_char((id)objc_getClass("NSString"), sel_registerName("stringWithUTF8String:"), "Quit ");
+	id quitTitle = ((id (*)(id, SEL, id))objc_msgSend)(quitTitlePrefixString, sel_registerName("stringByAppendingString:"), appName);
+
+	id quitMenuItemKey = objc_msgSend_id_const_char((id)objc_getClass("NSString"), sel_registerName("stringWithUTF8String:"), "q");
+	id quitMenuItemAlloc = objc_msgSend_id((id)objc_getClass("NSMenuItem"), sel_registerName("alloc"));
+	id quitMenuItem = ((id (*)(id, SEL, id, SEL, id))objc_msgSend)(quitMenuItemAlloc, sel_registerName("initWithTitle:action:keyEquivalent:"), quitTitle, sel_registerName("terminate:"), quitMenuItemKey);
+	objc_msgSend_void(quitMenuItem, sel_registerName("autorelease"));
+
+	objc_msgSend_void_id(appMenu, sel_registerName("addItem:"), quitMenuItem);
+	objc_msgSend_void_id(appMenuItem, sel_registerName("setSubmenu:"), appMenu);
+
+	NSRect rect = {{0, 0}, {200, 200}};
+	id windowAlloc = objc_msgSend_id((id)objc_getClass("NSWindow"), sel_registerName("alloc"));
+	id window = ((id (*)(id, SEL, NSRect, NSUInteger, NSUInteger, BOOL))objc_msgSend)(windowAlloc, sel_registerName("initWithContentRect:styleMask:backing:defer:"), rect, 15, 2, NO);
+	objc_msgSend_void(window, sel_registerName("autorelease"));
+
+	NSPoint point = {20, 20};
+	((void (*)(id, SEL, NSPoint))objc_msgSend)(window, sel_registerName("cascadeTopLeftFromPoint:"), point);
+
+	objc_msgSend_void_id(window, sel_registerName("setTitle:"), appName);
+	objc_msgSend_void_id(window, sel_registerName("makeKeyAndOrderFront:"), nil);
+	objc_msgSend_void_bool(NSApp, sel_registerName("activateIgnoringOtherApps:"), YES);
+
+	objc_msgSend_void(NSApp, sel_registerName("run:"));
+
+	objc_msgSend_void(autoreleasePool, sel_registerName("drain"));
 	return 0;
 }
 {% endhighlight %}
