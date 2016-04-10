@@ -17,8 +17,8 @@ Love :
 
 Hate :
 
+![problem_factory_in_java](/public/about_problem_factory.jpg)
+
 - Java
 - Over-complicated/bloated/bulky solutions
 - Abuse of whatever
-
-![problem_factory_in_java](/public/about_problem_factory.jpeg)
