@@ -18,6 +18,51 @@ So let me show you the code :
 ((id (*)(id, SEL))objc_msgSend)((id)objc_getClass("NSApplication"), sel_registerName("sharedApplication"));
 {% endhighlight %}
 
+Let's get a bit into details how this works exactly.
+
+- ```objc_msgSend``` is a C function from objc runtime, used for sending messages
+- ```((id (*)(id, SEL))objc_msgSend)``` makes a C cast to required type, so our C compiler can generate compliant Objective-C ABI function call. On OSX for 64 bit binaries we use something called ```System V Application Binary Interface AMD64 Architecture Processor Supplement``` document which describes how exactly to call a "native" function using CPU instructions and registers. Because objc runtime only provides a few declarations of ```objc_msgSend``` function, we need to convert it explicitly to required type, you can look at it as some sort of dynamic function overloading mechanism.
+- ```(id)objc_getClass("NSApplication")``` just get's objc class itself, and casts it to ```id``` type, which itself is just a pointer to ```objc_object```. Kinda similar to handle types in other API's.
+- ```sel_registerName("sharedApplication")``` returns pointer to objc_selector structure, which later used to figure out what needs to be called.
+
+You can find all Objective C runtime implementation details on [Apple's open source site](http://opensource.apple.com/source/objc4/objc4-680/runtime/).
+
+So that said let's create a simple OSX app in Objective-C first. As many people advocate to use full blown AppKit just to create simplest apps, let's go other way around - use as little frameworks functionality as possible and see what happens. To make life easier let's base our code on [Minimalist Cocoa programming](http://www.cocoawithlove.com/2010/09/minimalist-cocoa-programming.html) tutorial.
+
+{% highlight objc %}
+#import <Cocoa/Cocoa.h>
+
+int main ()
+{
+	[NSAutoreleasePool new];
+	[NSApplication sharedApplication];
+	[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+	id menubar = [[NSMenu new] autorelease];
+	id appMenuItem = [[NSMenuItem new] autorelease];
+	[menubar addItem:appMenuItem];
+	[NSApp setMainMenu:menubar];
+	id appMenu = [[NSMenu new] autorelease];
+	id appName = [[NSProcessInfo processInfo] processName];
+	id quitTitle = [@"Quit " stringByAppendingString:appName];
+	id quitMenuItem = [[[NSMenuItem alloc] initWithTitle:quitTitle
+		action:@selector(terminate:) keyEquivalent:@"q"] autorelease];
+	[appMenu addItem:quitMenuItem];
+	[appMenuItem setSubmenu:appMenu];
+
+	id window = [[[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 200, 200)
+		styleMask:NSTitledWindowMask backing:NSBackingStoreBuffered defer:NO]
+			autorelease];
+	[window cascadeTopLeftFromPoint:NSMakePoint(20,20)];
+	[window setTitle:appName];
+	[window makeKeyAndOrderFront:nil];
+	[NSApp activateIgnoringOtherApps:YES];
+
+	[NSApp run];
+
+	return 0;
+}
+{% endhighlight %}
+
 ### Run loop
 
 ### ARC
