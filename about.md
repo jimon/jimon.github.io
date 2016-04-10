@@ -17,4 +17,4 @@ Hate :
 - Over-complicated solutions.
 - Bloated/bulky solutions.
 - Abuse of systems.
-- ![problem_factory_in_java]({% site.baseurl/public/about_problem_factory.jpeg %}})
+- ![problem_factory_in_java](/public/about_problem_factory.jpeg)
