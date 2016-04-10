@@ -137,7 +137,7 @@ This is still Objective-C (non ARC), but we are very close to make it in plain C
 
 First we need to solve the memory management thing, funny said, but Apple's [Advanced Memory Management Programming Guide](https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/MemoryMgmt/Articles/MemoryMgmt.html) states ```If you use ARC, there is typically no need to understand the underlying implementation described in this document, although it may in some situations be helpful.```, using tools without understanding how they work usually is a bad sign IMHO.
 
-So what's up with ARC here ? If we want to compile that code under ARC enabled Objective-C it will fail to build because we manually call autorelease. If you want to make it work under ARC just remove autorelease calls and replace ```autoreleasePool``` with ```@autorelease { ... }``` construct.
+So what's up with ARC here ? If we want to compile that code under ARC enabled Objective-C compilation unit it will fail to build because we manually call autorelease. If you want to make it work under ARC just remove autorelease calls and replace ```autoreleasePool``` with ```@autorelease { ... }``` construct.
 
 Second we still include ```Cocoa.h```, which is Objective-C only header, we need to remove that dependency to make it a plain C code. ```NSPoint```, ```NSSize``` and ```NSRect``` are simple typedefs to CoreGraphics types (which are plain C), and NSApp is just an extern variable! Should be very easy :
 
