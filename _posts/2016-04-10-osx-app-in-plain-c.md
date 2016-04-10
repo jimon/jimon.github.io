@@ -108,7 +108,7 @@ int main ()
 	objc_msgSend_void_id(appMenu, sel_registerName("addItem:"), quitMenuItem);
 	objc_msgSend_void_id(appMenuItem, sel_registerName("setSubmenu:"), appMenu);
 
-	NSRect rect = {{0, 0}, {200, 200}};
+	NSRect rect = { {0, 0}, {200, 200} };
 	id windowAlloc = objc_msgSend_id((id)objc_getClass("NSWindow"), sel_registerName("alloc"));
 	id window = ((id (*)(id, SEL, NSRect, NSUInteger, NSUInteger, BOOL))objc_msgSend)(windowAlloc, sel_registerName("initWithContentRect:styleMask:backing:defer:"), rect, 15, 2, NO);
 	objc_msgSend_void(window, sel_registerName("autorelease"));
