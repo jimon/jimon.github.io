@@ -182,8 +182,7 @@ pre code {
 
 /* Pygments via Jekyll */
 .highlight {
-  margin-start: .25em;
-  margin-end: .25em;
+  margin: 0;
   margin-bottom: 1rem;
   border-radius: 4px;
 }
