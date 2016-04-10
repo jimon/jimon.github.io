@@ -3,9 +3,13 @@ layout: post
 title: OSX app in plain C
 ---
 
+*You can find [full source for this post here](https://github.com/jimon/osx_app_in_plain_c).*
+
 Usually Objective-C / Swift is used for native OSX apps, no wonder most parts of AppKit is written in Objective-C, though sometimes one can observe a struggle to create native apps in [Python](http://blog.adamw523.com/os-x-cocoa-application-python-pyobjc/) / [JS](https://github.com/parmanoir/jscocoa) / [Lua](https://github.com/torus/Lua-Objective-C-Bridge) / etc. Usually this requires some sort of magic dances around Objective-C runtime and language FFI.
 
 Today we gonna talk about creating OSX app in plain C, it should be much more easier then in other languages.
+
+### ABI
 
 In most cases Objective-C can be seen as syntax sugar on top of C plus runtime framework to support it's features. It's somewhat like CRT but more language-features oriented. With it you can invoke methods, create classes, create new methods, etc. This is what they use in other languages through FFI, but because we use C we don't really need FFI here.
 
@@ -129,6 +133,8 @@ int main ()
 
 This is still Objective-C (non ARC), but we are very close to make it in plain C.
 
+### ARC and NSPoint
+
 First we need to solve the memory management thing, funny said, but Apple's [Advanced Memory Management Programming Guide](https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/MemoryMgmt/Articles/MemoryMgmt.html) states ```If you use ARC, there is typically no need to understand the underlying implementation described in this document, although it may in some situations be helpful.```, using tools without understanding how they work usually is a bad sign IMHO.
 
 So what's up with ARC here ? If we want to compile that code under ARC enabled Objective-C it will fail to build because we manually call autorelease. If you want to make it work under ARC just remove autorelease calls and replace ```autoreleasePool``` with ```@autorelease { ... }``` construct.
@@ -148,3 +154,83 @@ typedef CGRect NSRect;
 extern id NSApp;
 #endif
 {% endhighlight %}
+
+So basically that's it! Now you have very basic OSX app in plain C.
+
+### Run-loop
+
+Now few words about ```[NSApp run]```, usually programmers are divided in two groups : one's that like Windows-like style of piping system events manugally, and others that like not to deal with run-loops at all. I find people in video games industry are generally prefer to write their own run-loops, this way they get more fine control over what and when application is doing. So let's see how we can do custom run-loop here.
+
+{% highlight objc %}
+// this is needed so if we don't use [NSApp run]
+objc_msgSend_void(NSApp, sel_registerName("finishLaunching"));
+// ...
+bool terminated = NO;
+while(!terminated)
+{
+	id distantPast = objc_msgSend_id((id)objc_getClass("NSDate"), sel_registerName("distantPast"));
+	id event = ((id (*)(id, SEL, NSUInteger, id, id, BOOL))objc_msgSend)(NSApp, sel_registerName("nextEventMatchingMask:untilDate:inMode:dequeue:"), NSUIntegerMax, distantPast, NSDefaultRunLoopMode, YES);
+
+	if(event)
+		objc_msgSend_void_id(NSApp, sel_registerName("sendEvent:"), event);
+	objc_msgSend_void(NSApp, sel_registerName("updateWindows"));
+
+	// .. do your custom stuff ..
+}
+{% endhighlight %}
+
+Note how we use distantPast date so we don't block to wait for the event.
+
+You also need to implement an application delegate if you want to catch ```applicationShouldTerminate``` call to set terminated to ```YES```.
+
+### Creating your own application delegate
+
+Sure we can create our own delegate in Objective-C easily, but in plain C it becomes a bit tricky. Instead of creating a class we will just create a functions with IMP signature which usually looks like this ```id (*IMP)(id, SEL, ...)```.
+
+{% highlight objc %}
+// let's just use global variable to make life easier
+bool terminated = false;
+// ... Objective-C variant
+@interface AppDelegate : NSObject<NSApplicationDelegate>
+-(NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender;
+@end
+@implementation AppDelegate
+-(NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
+{
+	terminated = true;
+	return NSTerminateCancel;
+}
+@end
+// ... plain C variant
+NSUInteger applicationShouldTerminate(id self, SEL _sel, id sender)
+{
+	printf("requested to terminate\n");
+	terminated = true;
+	return 0;
+}
+{% endhighlight %}
+
+Not that bad huh? Though it's only a part of the solution, now we need to create a class and instance of it.
+
+{% highlight objc %}
+// ... Objective-C variant
+AppDelegate * dg = [[AppDelegate alloc] init];
+[NSApp setDelegate:dg];
+
+// ... plain C variant
+Class appDelegateClass = objc_allocateClassPair((Class)objc_getClass("NSObject"), "AppDelegate", 0);
+bool resultAddProtoc = class_addProtocol(appDelegateClass, objc_getProtocol("NSApplicationDelegate"));
+assert(resultAddProtoc);
+bool resultAddMethod = class_addMethod(appDelegateClass, sel_registerName("applicationShouldTerminate:"), (IMP)applicationShouldTerminate, NSUIntegerEncoding "@:@");
+assert(resultAddMethod);
+id dgAlloc = objc_msgSend_id((id)appDelegateClass, sel_registerName("alloc"));
+id dg = objc_msgSend_id(dgAlloc, sel_registerName("init"));
+objc_msgSend_void(dg, sel_registerName("autorelease"));
+objc_msgSend_void_id(NSApp, sel_registerName("setDelegate:"), dg);
+{% endhighlight %}
+
+Looks a bit clumsy, but it works just fine :)
+
+### Outro
+
+Today we created a simple OSX app in plain C, learned how to create our own classes, and got a bit of insight how Objective-C ABI works. Hope it will help you to understand internals of OSX better! You can find [full source here](https://github.com/jimon/osx_app_in_plain_c) enhanced with OpenGL example as well.
