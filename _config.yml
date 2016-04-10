@@ -1,0 +1,18 @@
+# Dependencies
+markdown:         redcarpet
+highlighter:      rouge
+gems:             [jekyll-paginate, jekyll-gist]
+
+# Permalinks
+permalink:        pretty
+
+# Setup
+title:            jimon
+tagline:          'yet another blog'
+description:      'random runts'
+url:              https://jimon.github.io
+baseurl:          /
+author:
+  name:           'Dmytro Ivanov'
+  url:            https://github.com/jimon
+paginate:         5
