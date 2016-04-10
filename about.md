@@ -12,7 +12,7 @@ Love :
 - Challenging engineering problems
 - Embedded hardware / resource constraint systems
 - Mechanical keyboards
-- [![Write in C video](http://img.youtube.com/vi/XHosLhPEN3k/0.jpg)](http://www.youtube.com/watch?v=XHosLhPEN3k "Write in C")
+- [![Write in C video](http://img.youtube.com/vi/XHosLhPEN3k/3.jpg)](http://www.youtube.com/watch?v=XHosLhPEN3k "Write in C")
 
 Hate :
 
