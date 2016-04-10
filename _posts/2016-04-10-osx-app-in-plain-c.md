@@ -11,7 +11,7 @@ In most cases Objective-C can be seen as syntax sugar on top of C plus runtime f
 
 So let me show you the code :
 
-{% highlight objc linenos %}
+{% highlight objc %}
 // this :
 [NSApplication sharedApplication];
 // is the same as this :
@@ -29,7 +29,7 @@ You can find all Objective C runtime implementation details on [Apple's open sou
 
 So that said let's create a simple OSX app in Objective-C first. As many people advocate to use full blown AppKit just to create simplest apps, let's go other way around - use as little frameworks functionality as possible and see what happens. To make life easier let's base our code on [Minimalist Cocoa programming](http://www.cocoawithlove.com/2010/09/minimalist-cocoa-programming.html) tutorial.
 
-{% highlight objc linenos %}
+{% highlight objc %}
 #import <Cocoa/Cocoa.h>
 
 int main ()
