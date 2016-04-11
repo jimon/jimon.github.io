@@ -7,11 +7,11 @@ title: OSX app in plain C
 
 Usually Objective-C / Swift is used for native OSX apps, no wonder most parts of AppKit is written in Objective-C, though sometimes one can observe a struggle to create native apps in [Python](http://blog.adamw523.com/os-x-cocoa-application-python-pyobjc/) / [JS](https://github.com/parmanoir/jscocoa) / [Lua](https://github.com/torus/Lua-Objective-C-Bridge) / etc. Usually this requires some sort of magic dances around Objective-C runtime and language FFI.
 
-Today we gonna talk about creating OSX app in plain C, it should be much more easier then in other languages.
+Today we gonna talk about creating OSX app in plain C, it should be much more easier than in other languages.
 
 ### ABI
 
-In most cases Objective-C can be seen as syntax sugar on top of C plus runtime framework to support it's features. It's somewhat like CRT but more language-features oriented. With it you can invoke methods, create classes, create new methods, etc. This is what they use in other languages through FFI, but because we use C we don't really need FFI here.
+In most cases Objective-C can be seen as syntax sugar on top of C plus runtime framework to support its features. It's somewhat like CRT but more language-features oriented. With it you can invoke methods, create classes, create new methods, etc. This is what they use in other languages through FFI, but because we use C we dont really need FFI here.
 
 So let me show you the code :
 
@@ -159,7 +159,7 @@ So basically that's it! Now you have very basic OSX app in plain C.
 
 ### Run-loop
 
-Now few words about ```[NSApp run]```, usually programmers are divided in two groups : one's that like Windows-like style of piping system events manugally, and others that like not to deal with run-loops at all. I find people in video games industry are generally prefer to write their own run-loops, this way they get more fine control over what and when application is doing. So let's see how we can do custom run-loop here.
+Now few words about ```[NSApp run]```, usually programmers are divided in two groups : one that like Windows-like style of piping system events manually, and others that like not to deal with run-loops at all. I find people in video games industry are generally prefer to write their own run-loops, this way they get more fine control over what and when application is doing. So let's see how we can do custom run-loop here.
 
 {% highlight objc %}
 // this is needed so if we don't use [NSApp run]
